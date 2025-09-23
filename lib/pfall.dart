@@ -4,7 +4,7 @@ import 'dart:io' show Directory, File, stdout, Process, stderr, SystemEncoding;
 Future<void> runGetAll(List<String> args) async {
   for (final dir in _walkPubspecDirs()) {
     if (!_needGet(dir)) {
-      stdout.writeln('Running flutter pub get in ${dir.path}');
+      stdout.writeln('🚀 Running flutter pub get in ${dir.path}...');
       final result = await Process.run(
         'dart',
         ['pub', 'get'],
@@ -13,14 +13,14 @@ Future<void> runGetAll(List<String> args) async {
       stdout.write(result.stdout);
       stderr.write(result.stderr);
     } else {
-      stdout.writeln('pubspec.lock is up to date in ${dir.path}, skipping.');
+      stdout.writeln('✅ pubspec.lock is up to date in ${dir.path}.');
     }
   }
 }
 
 Future<void> runCleanAll(List<String> args) async {
   for (final dir in _walkPubspecDirs()) {
-    stdout.writeln('Cleaning in ${dir.path}');
+    stdout.writeln('🚀 Cleaning in ${dir.path}...');
 
     final pubspecFile = File('${dir.path}/pubspec.yaml');
     if (pubspecFile.existsSync()) {
