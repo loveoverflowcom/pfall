@@ -12,3 +12,10 @@ Activate globally from [pub.dev](https://pub.dev):
 
 ```bash
 dart pub global activate pfall
+```
+
+🚀 Usage
+Run pfall inside the root of your monorepo/workspace:
+```bash
+pfall
+```

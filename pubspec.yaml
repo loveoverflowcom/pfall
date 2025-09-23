@@ -1,6 +1,6 @@
 name: pfall
 description: "A CLI tool to run `flutter pub get` in all subdirectories containing a pubspec.yaml."
-version: 1.0.0
+version: 1.0.2
 repository: https://github.com/loveoverflowcom/pfall
 homepage: https://github.com/loveoverflowcom/pfall
 
@@ -14,3 +14,6 @@ dependencies:
 dev_dependencies:
   lints: ^6.0.0
   test: ^1.25.6
+
+executables:
+  pfall: pfall

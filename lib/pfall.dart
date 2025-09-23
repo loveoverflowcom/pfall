@@ -4,9 +4,13 @@ Future<void> runPFall(List<String> args) async {
   final root = Directory.current;
 
   final pubspecFiles = root
-      .listSync(recursive: true)
-      .where((e) => e is File && e.path.endsWith('pubspec.yaml'))
-      .cast<File>();
+    .listSync(recursive: true)
+    .where((e) => e is File && e.path.endsWith('pubspec.yaml'))
+    .cast<File>()
+    .where((file) {
+      final dirPath = file.parent.path.replaceAll('\\', '/'); 
+      return !dirPath.endsWith('flutter/ephemeral');
+    });
 
   for (final pubspec in pubspecFiles) {
     final dir = pubspec.parent;
