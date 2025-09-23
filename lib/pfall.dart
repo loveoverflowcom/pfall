@@ -1,4 +1,5 @@
-import 'dart:io' show Directory, File, stdout, Process, stderr;
+import 'dart:convert' show LineSplitter;
+import 'dart:io' show Directory, File, stdout, Process, stderr, SystemEncoding;
 
 Future<void> runGetAll(List<String> args) async {
   for (final dir in _walkPubspecDirs()) {
@@ -21,19 +22,34 @@ Future<void> runCleanAll(List<String> args) async {
   for (final dir in _walkPubspecDirs()) {
     stdout.writeln('Cleaning in ${dir.path}');
 
-    final lockFile = File('${dir.path}/pubspec.lock');
-    if (lockFile.existsSync()) {
-      lockFile.deleteSync();
-    }
+    final pubspecFile = File('${dir.path}/pubspec.yaml');
+    if (pubspecFile.existsSync()) {
+      if (await _isFlutterProject(pubspecFile)) {
+        final result = await Process.run(
+          'flutter',
+          ['clean'],
+          workingDirectory: dir.path,
+        );
 
-    final dartToolDir = Directory('${dir.path}/.dart_tool');
-    if (dartToolDir.existsSync()) {
-      dartToolDir.deleteSync(recursive: true);
-    }
+        stdout.write(result.stdout);
+        stderr.write(result.stderr);
+        continue;
+      } else {
+        final lockFile = File('${dir.path}/pubspec.lock');
+        if (lockFile.existsSync()) {
+          lockFile.deleteSync();
+        }
 
-    final buildDir = Directory('${dir.path}/build');
-    if (buildDir.existsSync()) {
-      buildDir.deleteSync(recursive: true);
+        final dartToolDir = Directory('${dir.path}/.dart_tool');
+        if (dartToolDir.existsSync()) {
+          dartToolDir.deleteSync(recursive: true);
+        }
+
+        final buildDir = Directory('${dir.path}/build');
+        if (buildDir.existsSync()) {
+          buildDir.deleteSync(recursive: true);
+        }
+      }
     }
   }
 }
@@ -74,4 +90,17 @@ final _ignoreDirs = [
 bool _shouldIgnore(String dirPath) {
   dirPath = dirPath.replaceAll('\\', '/');
   return _ignoreDirs.any((pattern) => dirPath.contains(pattern));
+}
+
+Future<bool> _isFlutterProject(File pubspecFile) async {
+  final stream = pubspecFile.openRead()
+      .transform(SystemEncoding().decoder)
+      .transform(const LineSplitter());
+
+  await for (final line in stream) {
+    if (line.trim().startsWith('flutter:')) {
+      return true;
+    }
+  }
+  return false;
 }
