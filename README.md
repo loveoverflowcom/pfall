@@ -1,6 +1,6 @@
-# 🌊 fall
+# 🌊 pfall
 
-`fall` is a simple Dart CLI tool that runs `flutter pub get` (or `dart pub get`) in **all subdirectories** that contain a `pubspec.yaml`.
+`pfall` is a simple Dart CLI tool that runs `flutter pub get` (or `dart pub get`) in **all subdirectories** that contain a `pubspec.yaml`.
 
 It saves you from having to run the command manually in every package of a monorepo or workspace.
 
@@ -11,4 +11,4 @@ It saves you from having to run the command manually in every package of a monor
 Activate globally from [pub.dev](https://pub.dev):
 
 ```bash
-dart pub global activate fall
+dart pub global activate pfall

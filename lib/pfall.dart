@@ -1,6 +1,6 @@
 import 'dart:io' show Directory, File, stdout, Process, stderr;
 
-Future<void> runFall(List<String> args) async {
+Future<void> runPFall(List<String> args) async {
   final root = Directory.current;
 
   final pubspecFiles = root
