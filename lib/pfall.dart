@@ -1,28 +1,14 @@
 import 'dart:io' show Directory, File, stdout, Process, stderr;
 
-Future<void> runPFall(List<String> args) async {
-  final root = Directory.current;
-
-  final pubspecFiles = root
-    .listSync(recursive: true)
-    .where((e) => e is File && e.path.endsWith('pubspec.yaml'))
-    .cast<File>()
-    .where((file) {
-      final dirPath = file.parent.path.replaceAll('\\', '/'); 
-      return !dirPath.endsWith('flutter/ephemeral');
-    });
-
-  for (final pubspec in pubspecFiles) {
-    final dir = pubspec.parent;
-
+Future<void> runGetAll(List<String> args) async {
+  for (final dir in _walkPubspecDirs()) {
     if (!_isLockUpToDate(dir)) {
       stdout.writeln('Running flutter pub get in ${dir.path}');
       final result = await Process.run(
-        'flutter',
+        'dart',
         ['pub', 'get'],
         workingDirectory: dir.path,
       );
-
       stdout.write(result.stdout);
       stderr.write(result.stderr);
     } else {
@@ -30,6 +16,28 @@ Future<void> runPFall(List<String> args) async {
     }
   }
 }
+
+Future<void> runCleanAll(List<String> args) async {
+  for (final dir in _walkPubspecDirs()) {
+    stdout.writeln('Cleaning in ${dir.path}');
+
+    final lockFile = File('${dir.path}/pubspec.lock');
+    if (lockFile.existsSync()) {
+      lockFile.deleteSync();
+    }
+
+    final dartToolDir = Directory('${dir.path}/.dart_tool');
+    if (dartToolDir.existsSync()) {
+      dartToolDir.deleteSync(recursive: true);
+    }
+
+    final buildDir = Directory('${dir.path}/build');
+    if (buildDir.existsSync()) {
+      buildDir.deleteSync(recursive: true);
+    }
+  }
+}
+
 
 bool _isLockUpToDate(Directory dir) {
   final pubspec = File('${dir.path}/pubspec.yaml');
@@ -41,4 +49,21 @@ bool _isLockUpToDate(Directory dir) {
   final lockModified = lock.lastModifiedSync();
 
   return lockModified.isAfter(pubspecModified);
+}
+
+Iterable<Directory> _walkPubspecDirs() sync* {
+  final root = Directory.current;
+
+  final pubspecFiles = root
+      .listSync(recursive: true)
+      .where((e) => e is File && e.path.endsWith('pubspec.yaml'))
+      .cast<File>()
+      .where((file) {
+        final dirPath = file.parent.path.replaceAll('\\', '/');
+        return !dirPath.endsWith('flutter/ephemeral');
+      });
+
+  for (final pubspec in pubspecFiles) {
+    yield pubspec.parent;
+  }
 }
