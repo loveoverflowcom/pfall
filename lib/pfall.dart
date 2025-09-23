@@ -3,8 +3,8 @@ import 'dart:io' show Directory, File, stdout, Process, stderr, SystemEncoding;
 
 Future<void> runGetAll(List<String> args) async {
   for (final dir in _walkPubspecDirs()) {
-    if (!_needGet(dir)) {
-      stdout.writeln('🚀 Running flutter pub get in ${dir.path}...');
+    if (_needGet(dir)) {
+      stdout.writeln('${_startMark()} Running flutter pub get in ${dir.path}...');
       final result = await Process.run(
         'dart',
         ['pub', 'get'],
@@ -13,46 +13,48 @@ Future<void> runGetAll(List<String> args) async {
       stdout.write(result.stdout);
       stderr.write(result.stderr);
     } else {
-      stdout.writeln('✅ pubspec.lock is up to date in ${dir.path}.');
+      stdout.writeln('${_okMark()} package is up to date in ${dir.path}.');
     }
   }
 }
 
 Future<void> runCleanAll(List<String> args) async {
   for (final dir in _walkPubspecDirs()) {
-    stdout.writeln('🚀 Cleaning in ${dir.path}...');
-
     final pubspecFile = File('${dir.path}/pubspec.yaml');
     if (pubspecFile.existsSync()) {
-      if (await _isFlutterProject(pubspecFile)) {
-        final result = await Process.run(
-          'flutter',
-          ['clean'],
-          workingDirectory: dir.path,
-        );
+      if (_needClean(dir)) {
+        stdout.writeln('${_startMark()} Cleaning in ${dir.path}...');
+        if (await _isFlutterProject(pubspecFile)) {
+          final result = await Process.run(
+            'flutter',
+            ['clean'],
+            workingDirectory: dir.path,
+          );
 
-        stdout.write(result.stdout);
-        stderr.write(result.stderr);
+          stdout.write(result.stdout);
+          stderr.write(result.stderr);
+        } else {
+          final lockFile = File('${dir.path}/pubspec.lock');
+          if (lockFile.existsSync()) {
+            lockFile.deleteSync();
+          }
+
+          final dartToolDir = Directory('${dir.path}/.dart_tool');
+          if (dartToolDir.existsSync()) {
+            dartToolDir.deleteSync(recursive: true);
+          }
+
+          final buildDir = Directory('${dir.path}/build');
+          if (buildDir.existsSync()) {
+            buildDir.deleteSync(recursive: true);
+          }
+        }
       } else {
-        final lockFile = File('${dir.path}/pubspec.lock');
-        if (lockFile.existsSync()) {
-          lockFile.deleteSync();
-        }
-
-        final dartToolDir = Directory('${dir.path}/.dart_tool');
-        if (dartToolDir.existsSync()) {
-          dartToolDir.deleteSync(recursive: true);
-        }
-
-        final buildDir = Directory('${dir.path}/build');
-        if (buildDir.existsSync()) {
-          buildDir.deleteSync(recursive: true);
-        }
+        stdout.writeln('${_okMark()} package is cleaned in ${dir.path}.');
       }
     }
   }
 }
-
 
 bool _needGet(Directory dir) {
   final pubspec = File('${dir.path}/pubspec.yaml');
@@ -65,7 +67,16 @@ bool _needGet(Directory dir) {
   final pubspecModified = pubspec.lastModifiedSync();
   final lockModified = lock.lastModifiedSync();
 
-  return lockModified.isAfter(pubspecModified);
+  return lockModified.isBefore(pubspecModified);
+}
+
+bool _needClean(Directory dir) {
+  final dartTool = Directory('${dir.path}/.dart_tool');
+  final build = Directory('${dir.path}/build');
+
+  if (dartTool.existsSync() || build.existsSync()) return true;
+
+  return false;
 }
 
 Iterable<Directory> _walkPubspecDirs() sync* {
@@ -104,4 +115,12 @@ Future<bool> _isFlutterProject(File pubspecFile) async {
     }
   }
   return false;
+}
+
+String _okMark() {
+  return stdout.hasTerminal ? '✅' : '[OK]';
+}
+
+String _startMark() {
+  return stdout.hasTerminal ? '🚀' : '[START]';
 }
