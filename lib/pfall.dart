@@ -58,12 +58,20 @@ Iterable<Directory> _walkPubspecDirs() sync* {
       .listSync(recursive: true)
       .where((e) => e is File && e.path.endsWith('pubspec.yaml'))
       .cast<File>()
-      .where((file) {
-        final dirPath = file.parent.path.replaceAll('\\', '/');
-        return !dirPath.endsWith('flutter/ephemeral');
-      });
+      .where((file) => !_shouldIgnore(file.parent.path));
 
   for (final pubspec in pubspecFiles) {
     yield pubspec.parent;
   }
+}
+
+final _ignoreDirs = [
+  '/flutter/ephemeral',
+  '/.symlinks',
+  '/.plugin_symlinks',
+];
+
+bool _shouldIgnore(String dirPath) {
+  dirPath = dirPath.replaceAll('\\', '/');
+  return _ignoreDirs.any((pattern) => dirPath.contains(pattern));
 }
