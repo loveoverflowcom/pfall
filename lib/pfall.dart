@@ -3,7 +3,7 @@ import 'dart:io' show Directory, File, stdout, Process, stderr, SystemEncoding;
 
 Future<void> runGetAll(List<String> args) async {
   for (final dir in _walkPubspecDirs()) {
-    if (!_isLockUpToDate(dir)) {
+    if (!_needGet(dir)) {
       stdout.writeln('Running flutter pub get in ${dir.path}');
       final result = await Process.run(
         'dart',
@@ -33,7 +33,6 @@ Future<void> runCleanAll(List<String> args) async {
 
         stdout.write(result.stdout);
         stderr.write(result.stderr);
-        continue;
       } else {
         final lockFile = File('${dir.path}/pubspec.lock');
         if (lockFile.existsSync()) {
@@ -55,11 +54,13 @@ Future<void> runCleanAll(List<String> args) async {
 }
 
 
-bool _isLockUpToDate(Directory dir) {
+bool _needGet(Directory dir) {
   final pubspec = File('${dir.path}/pubspec.yaml');
   final lock = File('${dir.path}/pubspec.lock');
+  final packageConfig = File('${dir.path}/.dart_tool/package_config.json');
 
   if (!lock.existsSync()) return false;
+  if (!packageConfig.existsSync()) return true;
 
   final pubspecModified = pubspec.lastModifiedSync();
   final lockModified = lock.lastModifiedSync();
