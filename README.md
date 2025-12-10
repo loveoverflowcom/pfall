@@ -33,6 +33,14 @@ pfall help
 pfall get
 ```
 
+### Force re-fetch Git dependencies
+
+```bash
+pfall get --force
+# or
+pfall get -f
+```
+
 ### Clean `.dart_tool`, `build`, and `pubspec.lock` in all subdirectories
 
 ```bash
