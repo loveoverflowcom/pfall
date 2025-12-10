@@ -9,6 +9,13 @@ Future<void> main(List<String> args) async {
     ..addCommand('clean')
     ..addCommand('get');
 
+  parser.commands['get']!
+    .addFlag(
+      'force',
+      abbr: 'f',
+      negatable: false,
+    );
+
   final argResults = parser.parse(args);
 
   if (argResults.command?.name == 'help') {

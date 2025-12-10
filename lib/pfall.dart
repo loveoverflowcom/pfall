@@ -1,15 +1,30 @@
 import 'dart:convert' show LineSplitter;
 import 'dart:io' show Directory, File, stdout, Process, stderr, SystemEncoding;
 
+import 'package:args/args.dart' show ArgParser;
+
 Future<void> runGetAll(List<String> args) async {
+  final parser = ArgParser()
+    ..addFlag('force', abbr: 'f', negatable: false);
+  final result = parser.parse(args);
+
+  final force = result['force'] == true;
+
   for (final dir in _walkPubspecDirs()) {
-    if (_needGet(dir)) {
-      stdout.writeln('${_startMark()} Running flutter pub get in ${dir.path}...');
+    final shouldRun = force || _needGet(dir);
+
+    if (shouldRun) {
+      stdout.writeln(
+        '${_startMark()} Running flutter pub get in ${dir.path}...'
+        '${force ? " (forced)" : ""}',
+      );
+
       final result = await Process.run(
         'dart',
         ['pub', 'get'],
         workingDirectory: dir.path,
       );
+
       stdout.write(result.stdout);
       stderr.write(result.stderr);
     } else {
@@ -17,6 +32,7 @@ Future<void> runGetAll(List<String> args) async {
     }
   }
 }
+
 
 Future<void> runCleanAll(List<String> args) async {
   for (final dir in _walkPubspecDirs()) {
